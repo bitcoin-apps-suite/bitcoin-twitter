@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  name          String?
+  bio           String?
+  image         String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tweets        Tweet[]
+  likes         Like[]
+  retweets      Retweet[]
+  followers     Follow[]  @relation("follower")
+  following     Follow[]  @relation("following")
+  comments      Comment[]
+}
+
+model Tweet {
+  id            String    @id @default(cuid())
+  content       String
+  image         String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  likes         Like[]
+  retweets      Retweet[]
+  comments      Comment[]
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Like {
+  id            String    @id @default(cuid())
+  userId        String
+  tweetId       String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tweet         Tweet     @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, tweetId])
+  @@index([userId])
+  @@index([tweetId])
+}
+
+model Retweet {
+  id            String    @id @default(cuid())
+  userId        String
+  tweetId       String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tweet         Tweet     @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, tweetId])
+  @@index([userId])
+  @@index([tweetId])
+}
+
+model Follow {
+  id            String    @id @default(cuid())
+  followerId    String
+  followingId   String
+  follower      User      @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following     User      @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Comment {
+  id            String    @id @default(cuid())
+  content       String
+  userId        String
+  tweetId       String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tweet         Tweet     @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([tweetId])
+}
